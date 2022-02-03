@@ -8,6 +8,8 @@
 import UIKit
 
 class SearchViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    var parentController: ViewController?
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { foundShows.count }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -33,7 +35,6 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
 
                     DispatchQueue.main.async(execute: {
                         let image = UIImage(data: data!)
-                        print("image size: \(image?.size.width) x \(image?.size.height)")
                         cell.posterImageView?.image = image
                     })
                 }).resume()
@@ -46,6 +47,23 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
     @IBOutlet var searchResultsTableView: UITableView!
     @IBOutlet var searchTerms: UITextField!
     @IBOutlet var searchActivityIndicator: UIActivityIndicatorView!
+
+    @IBAction func likeTouchUpInside(_ sender: UIButton){
+        let index = Int(sender.tag)
+        let targetShow = foundShows[index]
+
+        if let parentController = parentController {
+            parentController.addShow(targetShow)
+            let alert = UIAlertController.init(title: nil, message: "Added!", preferredStyle: .alert)
+            self.present(alert, animated: true, completion: nil)
+
+            let when = DispatchTime.now() + 1
+            DispatchQueue.main.asyncAfter(deadline: when){
+                // your code with delay
+                alert.dismiss(animated: true, completion: nil)
+            }
+        }
+    }
 
     var foundShows = [Show]()
     

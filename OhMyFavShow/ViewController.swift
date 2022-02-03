@@ -47,6 +47,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         ShowTable.delegate = self
     }
 
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        print("parent controller: prepare for segue \(segue.identifier)")
+        if segue.identifier == "showSearch" {
+            if let searchViewController = segue.destination as? SearchViewController {
+                searchViewController.parentController = self
+            }
+        }
+    }
+
+    func addShow(_ newShow: Show) {
+        // TODO: persist shows collection
+        shows.append(newShow)
+        ShowTable.beginUpdates()
+        ShowTable.insertRows(at: [IndexPath(row: shows.count-1, section: 0)], with: .automatic)
+        ShowTable.endUpdates()
+    }
+
     @IBOutlet weak var PlotLabel: UILabel!
     @IBOutlet weak var TitleLabel: UILabel!
     @IBOutlet weak var ShowTable: UITableView!

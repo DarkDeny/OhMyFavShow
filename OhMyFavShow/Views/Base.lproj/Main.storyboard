@@ -76,7 +76,7 @@
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="Search for shows"/>
                                 <connections>
-                                    <segue destination="ozn-DN-l7m" kind="show" id="K22-tK-ddi"/>
+                                    <segue destination="ozn-DN-l7m" kind="show" identifier="showSearch" id="K22-tK-ddi"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -147,6 +147,9 @@
                                                     <buttonConfiguration key="configuration" style="plain" title="Like" titleAlignment="trailing">
                                                         <color key="baseForegroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                     </buttonConfiguration>
+                                                    <connections>
+                                                        <action selector="likeTouchUpInside:" destination="ozn-DN-l7m" eventType="touchUpInside" id="UqQ-eu-Xb5"/>
+                                                    </connections>
                                                 </button>
                                                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="vbG-61-rHp" userLabel="posterImage">
                                                     <rect key="frame" x="5" y="5" width="120" height="180"/>
@@ -180,7 +183,7 @@
                                             </constraints>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <outlet property="likeButton" destination="hfj-P5-6f8" id="5Ju-V2-DnK"/>
+                                            <outlet property="likeButton" destination="hfj-P5-6f8" id="kWA-jb-gEQ"/>
                                             <outlet property="plotLabel" destination="pC7-SL-u7T" id="DGT-S2-sdg"/>
                                             <outlet property="posterImageView" destination="vbG-61-rHp" id="e3l-Su-kt7"/>
                                             <outlet property="titleLabel" destination="ffW-Xv-Jf3" id="NBy-OX-fb7"/>
