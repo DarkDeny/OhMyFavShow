@@ -25,7 +25,16 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
         return cell
     }
 
+    var knownImages = [String : Data]()
     func displayImage(_ row: Int, cell: SearchShowsTableViewCell) {
+        if let index = knownImages.index(forKey: foundShows[row].posterUrl!) {
+            print("found in cache: \(foundShows[row].posterUrl!)")
+            var data = knownImages[index].value
+            let image = UIImage(data: data)
+            cell.posterImageView?.image = image
+            return
+        }
+
         let url: String = (URL(string: foundShows[row].posterUrl!)?.absoluteString)!
         URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
                     if error != nil {
@@ -35,9 +44,11 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
 
                     DispatchQueue.main.async(execute: {
                         let image = UIImage(data: data!)
+                        self.knownImages[url] = data!
                         cell.posterImageView?.image = image
                     })
-                }).resume()
+                })
+                .resume()
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -55,11 +66,10 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
         if let parentController = parentController {
             parentController.addShow(targetShow)
             let alert = UIAlertController.init(title: nil, message: "Added!", preferredStyle: .alert)
-            self.present(alert, animated: true, completion: nil)
+            present(alert, animated: true, completion: nil)
 
             let when = DispatchTime.now() + 1
             DispatchQueue.main.asyncAfter(deadline: when){
-                // your code with delay
                 alert.dismiss(animated: true, completion: nil)
             }
         }
@@ -78,14 +88,31 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
 
-    func parseShowsData(data: Data?) {
-        if let data = data {
-            let object = JSONParser.parse(data: data)
-            if let object = object{
-                
+    func parseShowsData(showData: Data?) {
+        if let showData = showData {
+            let object = JSONParser.parse(data: showData)
+            if let object = object {
                 foundShows = ShowDataProcessor.mapJson(object: object, dataKey: "Search")
                 for show in foundShows {
-                    show.requestDetails(controller: self)
+                    print("Requesting details for: \(show.imdbId)")
+                    // TODO: remove API key!
+                    let url = URL.init(string: "https://www.omdbapi.com/?apikey=aceb2294&type=series&i=\(show.imdbId)")
+                    URLSession.shared.dataTask(with:url!, completionHandler: {(data, response, error) in
+                        guard let data = data, error == nil else { return }
+
+                        let decoder = JSONDecoder()
+                        do {
+                            let detailsObject = try! decoder.decode(Show.self, from: data)
+                            show.plot = detailsObject.plot
+                            show.posterUrl = detailsObject.posterUrl
+                            print("success for \(detailsObject.title)")
+                            show.loaded = true
+                            self.onShowImageLoaded()
+                        }
+                        catch {
+                            print(error)
+                        }
+                    }).resume()
                 }
             }
         }
