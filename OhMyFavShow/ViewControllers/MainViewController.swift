@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class MainViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     @IBOutlet weak var plotLabel: UILabel!
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var showTable: UITableView!
@@ -59,7 +59,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         plotLabel.text = shows[indexPath.item].plot
 
         // TODO: cache image data on adding to favorites step!
-        let url: String = (URL(string: shows[indexPath.item].posterUrl!)?.absoluteString)!
+        let url: String = (URL(string: shows[indexPath.item].posterUrl)?.absoluteString)!
         URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
                     if error != nil {
                         print(error!)
@@ -74,8 +74,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        print("prepare for segue: \(segue.identifier)")
         if segue.identifier == "showSearch" {
             if let searchViewController = segue.destination as? SearchViewController {
+                print("destination is SearchViewController, parent is set!")
                 searchViewController.parentController = self
             }
         }

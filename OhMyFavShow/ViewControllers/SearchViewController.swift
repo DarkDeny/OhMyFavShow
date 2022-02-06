@@ -8,7 +8,7 @@
 import UIKit
 
 class SearchViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
-    var parentController: ViewController?
+    var parentController: MainViewController?
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { foundShows.count }
 
@@ -27,28 +27,25 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
 
     var knownImages = [String : Data]()
     func displayImage(_ row: Int, cell: SearchShowsTableViewCell) {
-        if let index = knownImages.index(forKey: foundShows[row].posterUrl!) {
-            print("found in cache: \(foundShows[row].posterUrl!)")
+        if let index = knownImages.index(forKey: foundShows[row].posterUrl) {
+            print("found in cache: \(foundShows[row].posterUrl)")
             var data = knownImages[index].value
             let image = UIImage(data: data)
             cell.posterImageView?.image = image
             return
         }
 
-        let url: String = (URL(string: foundShows[row].posterUrl!)?.absoluteString)!
-        URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
-                    if error != nil {
-                        print(error!)
-                        return
-                    }
-
-                    DispatchQueue.main.async(execute: {
-                        let image = UIImage(data: data!)
-                        self.knownImages[url] = data!
-                        cell.posterImageView?.image = image
-                    })
-                })
-                .resume()
+        do {
+            Task {
+                let url = URL(string: foundShows[row].posterUrl)
+                let (data, _) = try await URLSession.shared.data(from: url!)
+                let image = UIImage(data: data)
+                self.knownImages[url!.absoluteString] = data
+                cell.posterImageView?.image = image
+            }
+        } catch {
+            print(error)
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -77,61 +74,20 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
 
     var foundShows = [Show]()
     
-    @IBAction func startSearch(withSender: UIButton){
+    @IBAction func startSearch(withSender: UIButton) {
         let searchTerm = searchTerms.text!
         if searchTerm.count > 2 {
             foundShows.removeAll()
             searchResultsTableView.reloadData()
             searchActivityIndicator.startAnimating()
-            let url = "https://www.omdbapi.com/?apikey=aceb2294&type=series&s=\(searchTerm)"
-            HTTPHandler.getJson(urlString: url, completionHandler: parseShowsData)
-        }
-    }
-
-    func parseShowsData(showData: Data?) {
-        if let showData = showData {
-            let object = JSONParser.parse(data: showData)
-            if let object = object {
-                foundShows = ShowDataProcessor.mapJson(object: object, dataKey: "Search")
-                for show in foundShows {
-                    print("Requesting details for: \(show.imdbId)")
-                    // TODO: remove API key!
-                    let url = URL.init(string: "https://www.omdbapi.com/?apikey=aceb2294&type=series&i=\(show.imdbId)")
-                    URLSession.shared.dataTask(with:url!, completionHandler: {(data, response, error) in
-                        guard let data = data, error == nil else { return }
-
-                        let decoder = JSONDecoder()
-                        do {
-                            let detailsObject = try! decoder.decode(Show.self, from: data)
-                            show.plot = detailsObject.plot
-                            show.posterUrl = detailsObject.posterUrl
-                            print("success for \(detailsObject.title)")
-                            show.loaded = true
-                            self.onShowImageLoaded()
-                        }
-                        catch {
-                            print(error)
-                        }
-                    }).resume()
-                }
-            }
-        }
-    }
-
-    func onShowImageLoaded() {
-        var allLoaded = true
-        for show in foundShows {
-            if !show.loaded {
-                allLoaded = false
-                break
-            }
-        }
-
-        if allLoaded {
-            DispatchQueue.main.async() {
+            Task {
+                foundShows = await ShowFetcher.fetch(for: searchTerm)
+                print("found \(foundShows.count) show(s), stopping animation, reloading table data source")
                 self.searchResultsTableView.reloadData()
                 self.searchActivityIndicator.stopAnimating()
             }
+        } else {
+            // TODO: alert about not enough characters!
         }
     }
 
