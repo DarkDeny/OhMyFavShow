@@ -22,7 +22,7 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         let cell = tableView.dequeueReusableCell(withIdentifier: "showCell", for: indexPath) as! ShowTableViewCell
         let targetShow = shows[indexPath.item]
 
-        cell.showTitle.text = targetShow.title
+        cell.showTitle.text = targetShow.name
         if (targetShow.unseenEpisodes > 0) {
             cell.unseenCount.isHidden = false
             cell.unseenCount.text = String(targetShow.unseenEpisodes)
@@ -55,22 +55,25 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("tableView didSelectRowAt \(indexPath)")
-        titleLabel.text = shows[indexPath.item].title
-        plotLabel.text = shows[indexPath.item].plot
+        titleLabel.text = shows[indexPath.item].name
+        plotLabel.text = shows[indexPath.item].overview
 
         // TODO: cache image data on adding to favorites step!
-        let url: String = (URL(string: shows[indexPath.item].posterUrl)?.absoluteString)!
-        URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
-                    if error != nil {
-                        print(error!)
-                        return
-                    }
+        if let fullPosterPath = shows[indexPath.item].fullPosterPath {
+            let url: String = (URL(string: fullPosterPath)?.absoluteString)!
+            URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
+                        if error != nil {
+                            print(error!)
+                            return
+                        }
 
-                    DispatchQueue.main.async(execute: {
-                        let image = UIImage(data: data!)
-                        self.posterImage.image = image
+                        DispatchQueue.main.async(execute: {
+                            let image = UIImage(data: data!)
+                            self.posterImage.image = image
+                        })
                     })
-                }).resume()
+                    .resume()
+        }
     }
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -91,7 +94,7 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         saveData()
     }
 
-    func getFileUrl() -> URL {
+    fileprivate func getFileUrl() -> URL {
         let documentDirectory = try! FileManager.default.url(for: .documentDirectory,
                 in: .userDomainMask,
                 appropriateFor:nil,
@@ -100,14 +103,16 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         return fileURL
     }
 
-    func loadData() {
+    fileprivate func loadData() {
         do {
             let fileUrl = getFileUrl()
             let stringData = try String(contentsOf: fileUrl)
+            print("saved data is:\n\n\(stringData)\n\n")
+
             let decoder = JSONDecoder()
             var bytes = [UInt8](stringData.utf8)
             var data = Data(bytes: bytes, count: bytes.count)
-            shows = try! decoder.decode([Show].self, from: data)
+            shows = try decoder.decode([Show].self, from: data)
             print("successfully loaded data!")
         } catch {
             print(error)
@@ -118,16 +123,15 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
 
-    func saveData() {
+    fileprivate func saveData() {
         do {
             let fileURL = getFileUrl()
             let encoder = JSONEncoder()
             let stringData = try encoder.encode(shows)
             try stringData.write(to: fileURL)
-            print("updates were successfully saved! \(stringData)")
+            print("updates were successfully saved!\n\n")
         } catch {
             print(error)
         }
     }
-
 }

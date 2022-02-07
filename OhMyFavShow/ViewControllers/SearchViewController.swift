@@ -16,8 +16,8 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
         let cell = searchResultsTableView.dequeueReusableCell(withIdentifier: "searchShowCell", for: indexPath) as! SearchShowsTableViewCell
 
         let currentShow = foundShows[indexPath.item]
-        cell.titleLabel.text = currentShow.title
-        cell.plotLabel.text = currentShow.plot
+        cell.titleLabel.text = currentShow.name
+        cell.plotLabel.text = currentShow.overview
         cell.yearLabel.text = String(currentShow.year)
         cell.likeButton.tag = indexPath.item
         displayImage(indexPath.item, cell: cell)
@@ -27,24 +27,27 @@ class SearchViewController: UIViewController, UITableViewDataSource, UITableView
 
     var knownImages = [String : Data]()
     func displayImage(_ row: Int, cell: SearchShowsTableViewCell) {
-        if let index = knownImages.index(forKey: foundShows[row].posterUrl) {
-            print("found in cache: \(foundShows[row].posterUrl)")
-            var data = knownImages[index].value
-            let image = UIImage(data: data)
-            cell.posterImageView?.image = image
-            return
-        }
-
-        do {
-            Task {
-                let url = URL(string: foundShows[row].posterUrl)
-                let (data, _) = try await URLSession.shared.data(from: url!)
+        if let fullPosterPath = foundShows[row].fullPosterPath {
+            if let index = knownImages.index(forKey: fullPosterPath) {
+                print("found in cache: \(fullPosterPath)")
+                var data = knownImages[index].value
                 let image = UIImage(data: data)
-                self.knownImages[url!.absoluteString] = data
                 cell.posterImageView?.image = image
+                return
             }
-        } catch {
-            print(error)
+
+            do {
+                Task {
+                    print("requesting img: \(fullPosterPath)")
+                    let url = URL(string: fullPosterPath)
+                    let (data, _) = try await URLSession.shared.data(from: url!)
+                    let image = UIImage(data: data)
+                    self.knownImages[url!.absoluteString] = data
+                    cell.posterImageView?.image = image
+                }
+            } catch {
+                print(error)
+            }
         }
     }
     
