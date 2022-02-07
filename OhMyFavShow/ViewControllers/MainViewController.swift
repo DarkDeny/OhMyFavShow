@@ -53,6 +53,19 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
 
+    // MARK - Table delegate
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let action = UIContextualAction(style: .destructive, title: "Delete") { _, _, actionPerformed in
+            print("removing show at row \(indexPath.item)")
+            self.shows.remove(at: indexPath.item)
+            self.saveData()
+            self.showTable.deleteRows(at: [indexPath], with: .fade)
+            actionPerformed(true)
+        }
+
+        return UISwipeActionsConfiguration(actions: [action])
+    }
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("tableView didSelectRowAt \(indexPath)")
         titleLabel.text = shows[indexPath.item].name
