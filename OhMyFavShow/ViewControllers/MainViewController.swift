@@ -71,7 +71,6 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         titleLabel.text = shows[indexPath.item].name
         plotLabel.text = shows[indexPath.item].overview
 
-        // TODO: cache image data on adding to favorites step!
         if let fullPosterPath = shows[indexPath.item].fullPosterPath {
             let url: String = (URL(string: fullPosterPath)?.absoluteString)!
             URLSession.shared.dataTask(with: URL(string: url)!, completionHandler: { (data, response, error) -> Void in
@@ -104,6 +103,16 @@ class MainViewController: UIViewController, UITableViewDelegate, UITableViewData
         showTable.beginUpdates()
         showTable.insertRows(at: [IndexPath(row: shows.count-1, section: 0)], with: .automatic)
         showTable.endUpdates()
+        // TODO: request season and episode details!
+        for seasonData in newShow.seasons {
+            let seasonId = seasonData.id
+            Task {
+                var seasonDetails = await ShowFetcher.getSeasonData(newShow.id, for: seasonData.seasonNumber)
+                if let seasonDetails = seasonDetails {
+                    print("got season \(seasonDetails.seasonNumber) named '\(seasonDetails.name)'")
+                }
+            }
+        }
         saveData()
     }
 

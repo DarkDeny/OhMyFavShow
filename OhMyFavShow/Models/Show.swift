@@ -16,9 +16,10 @@ struct Show : Codable {
     var type: String
     var numberOfSeasons: Int
     var numberOfEpisodes: Int
+    var seasons: [SeasonShort]
 
     enum CodingKeys: String, CodingKey {
-        case id, name, overview, tagline, type, status
+        case id, name, overview, tagline, type, status, seasons
         case posterPath = "poster_path"
         case voteAverage = "vote_average"
         case firstAirDate = "first_air_date"
