@@ -17,7 +17,11 @@ struct SeasonShort : Codable {
     }
 }
 
-struct SeasonDetails : Codable {
+struct SeasonDetails : Codable, Hashable {
+    static func ==(lhs: SeasonDetails, rhs: SeasonDetails) -> Bool {
+        lhs.id == rhs.id
+    }
+
     var id: Int
     var name: String
     var overview: String
@@ -29,5 +33,12 @@ struct SeasonDetails : Codable {
         case id, name, overview, episodes
         case posterPath = "poster_path"
         case seasonNumber = "season_number"
+    }
+
+    var nameWithNumber : String { "\(seasonNumber). \(name)" }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
     }
 }

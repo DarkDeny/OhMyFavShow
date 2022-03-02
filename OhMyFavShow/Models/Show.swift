@@ -17,9 +17,27 @@ struct Show : Codable {
     var numberOfSeasons: Int
     var numberOfEpisodes: Int
     var seasons: [SeasonShort]
+    var seasonsDetailed: [SeasonDetails]?
+
+    init(from shortShowInfo: Show, with seasons: [SeasonDetails]) {
+        id = shortShowInfo.id
+        name = shortShowInfo.name
+        overview = shortShowInfo.overview
+        posterPath = shortShowInfo.posterPath
+        voteAverage = shortShowInfo.voteAverage
+        firstAirDate = shortShowInfo.firstAirDate
+        tagline = shortShowInfo.tagline
+        status = shortShowInfo.status
+        type = shortShowInfo.type
+        numberOfEpisodes = shortShowInfo.numberOfEpisodes
+        numberOfSeasons = shortShowInfo.numberOfSeasons
+        seasonsDetailed = seasons
+
+        self.seasons = [SeasonShort]()
+    }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, overview, tagline, type, status, seasons
+        case id, name, overview, tagline, type, status, seasons, seasonsDetailed
         case posterPath = "poster_path"
         case voteAverage = "vote_average"
         case firstAirDate = "first_air_date"
@@ -34,7 +52,7 @@ struct Show : Codable {
     }
 
     var fullPosterPath: String? {
-        if let posterPath = self.posterPath {
+        if let posterPath = posterPath {
             return "https://image.tmdb.org/t/p/w500" + posterPath
         }
         return nil

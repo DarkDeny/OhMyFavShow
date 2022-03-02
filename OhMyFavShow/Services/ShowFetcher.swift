@@ -5,12 +5,34 @@
 import Foundation
 
 class ShowFetcher {
+    static func downloadMultipleSeasonDetails(for show: Show) async -> [SeasonDetails] {
+        var detailedSeasons = [SeasonDetails]()
+        do {
+            try await withThrowingTaskGroup(of: SeasonDetails.self, body: {
+                group in
+                for season in show.seasons {
+                    group.addTask {
+                        async let detailedSeason = ShowFetcher.getSeasonData(show.id, for: season.seasonNumber)
+                        return await detailedSeason!
+                    }
+                }
+                for try await seasonDetails in group {
+                    print("got season \(seasonDetails.seasonNumber) named '\(seasonDetails.name)'")
+                    detailedSeasons.append(seasonDetails)
+                }
+            })
+        } catch {
+          print(error)
+        }
+
+        return detailedSeasons
+    }
+
     static func getSeasonData(_ showId: Int, for seasonNumber: Int) async -> SeasonDetails? {
-        // TODO: request!
         let decoder = JSONDecoder()
         let stringUrl = "https://api.themoviedb.org/3/tv/\(showId)/season/\(seasonNumber)?api_key=a355d3dfcd7ca5e7eab1aa4a8a11d44b"
         let url = URL(string: stringUrl)
-        print("requesting url: \(url)")
+        print("requesting url: \(url!)")
         do {
             let (data, _) = try await URLSession.shared.data(from: url!)
             print("resulting response is:\n\(String(decoding: data, as: UTF8.self))")
@@ -31,7 +53,7 @@ class ShowFetcher {
         let escapedSearchTerm = searchTerm.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)!
         let stringUrl = "https://api.themoviedb.org/3/search/tv?api_key=a355d3dfcd7ca5e7eab1aa4a8a11d44b&query=\(escapedSearchTerm)"
         let url = URL(string: stringUrl)
-        print("requesting url: \(url)")
+        print("requesting url: \(url!)")
         do {
             let (data, _) = try await URLSession.shared.data(from: url!)
             let searchResult = try decoder.decode(Search.self, from: data)
