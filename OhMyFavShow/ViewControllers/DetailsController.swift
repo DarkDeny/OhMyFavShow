@@ -97,7 +97,6 @@ class DetailsController : UIViewController, UITableViewDelegate, UITableViewData
     var episodeDataSources = [SeasonDetails: EpisodesDataSource]()
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let targetSeason = seasons[indexPath.item]
-        print("requested data for section \(indexPath.section) row \(indexPath.row), season has \(targetSeason.episodes.count) episode(s)")
 
         let cell = tableView.dequeueReusableCell(withIdentifier: SeasonViewCell.cellId) as! SeasonViewCell
         cell.selectionStyle = .none
@@ -114,13 +113,9 @@ class DetailsController : UIViewController, UITableViewDelegate, UITableViewData
         return cell
     }
 
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat{
-
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let episodesCount = seasons[indexPath.item].episodes.count
+        // 44 is default height, atm UITableView.autodimension returns -1 =(
         return CGFloat(44*episodesCount)
-
-        let labelHeight = UITableView.automaticDimension
-        let height = labelHeight * CGFloat(episodesCount)
-        return height
     }
 }
